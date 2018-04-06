@@ -293,6 +293,13 @@ class BasicTestCase(unittest.TestCase):
         pt = geometry.Point(0, 1)
         self.assertRaises(TypeError, geometry.MultiPolygon, pt)
 
+    def test_multipolygon_coords_no_interiors(self):
+        mp = geometry.MultiPolygon([(((0.0, 0.0), (0.0, 1.0), (1.0, 1.0),
+                                      (1.0, 0.0)),
+                                     )
+                                    ])
+        self.assertEqual(len(mp.geoms), 1)
+
     def test_geometrycollection(self):
         self.assertRaises(TypeError, geometry.GeometryCollection)
         self.assertRaises(TypeError, geometry.GeometryCollection, None)
@@ -697,7 +704,7 @@ class ReprMethodTestCase(unittest.TestCase):
         self.assertEquals(self.multiline.__repr__(), ml_stringchk)
         self.assertEquals(self.multipoly.__repr__(), m_polychk)
         self.assertEquals(self.geo_collect.__repr__(), gc_chk)
-        self.assertEquals(self.geometry.__repr__()[0:34], 
+        self.assertEquals(self.geometry.__repr__()[0:34],
                           '<pygeoif.geometry._Geometry object')
         self.assertEquals(self.feature.__repr__(),
                           '<Feature Instance Point geometry 2 properties>')

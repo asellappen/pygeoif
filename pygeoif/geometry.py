@@ -22,59 +22,6 @@ import re
 class _GeoObject(object):
     """Base Class for Geometry, Feature, and FeatureCollection"""
 
-    def __repr__(self):
-        if self._type == 'Point':
-            return("Point({0}, {1})".format(self.x, self.y))
-        elif self._type == 'LineString':
-            instance = "LineString Instance"
-            qty = len(self.coords)
-            return "<{0} {1} Coords>".format(instance, qty)
-        elif self._type == 'LinearRing':
-            instance = "LinearRing Instance"
-            qty = len(self.coords)
-            return "<{0} {1} Coords>".format(instance, qty)
-        elif self._type == 'Polygon':
-            instance = "Polygon Instance"
-            inter_qty = len(self._interiors)
-            exter_qty = len(self._exterior.coords)
-            return "<{0} {1} Interior {2} Exterior>".format(
-                instance, inter_qty, exter_qty)
-        elif self._type == 'MultiPoint':
-            instance = "MultiPoint Instance"
-            qty = len(self)
-            return "<{0} {1} Points>".format(instance, qty)
-        elif self._type == 'MultiLineString':
-            instance = "MultiLineString Instance"
-            qty = len(self)
-            bounds = self.bounds
-            return "<{0} {1} Lines {2} bbox>".format(instance, qty, bounds)
-        elif self._type == 'MultiPolygon':
-            instance = "MultiPolygon Instance"
-            qty = len(self)
-            bounds = self.bounds
-            return "<{0} {1} Polygons {2} bbox>".format(instance, qty, bounds)
-        elif self._type == 'GeometryCollection':
-            instance = "GeometryCollection Instance"
-            qty = len(self)
-            bounds = self.bounds
-            return "<{0} {1} Geometries {2} bbox>".format(
-                instance, qty, bounds)
-        elif self._type == 'Feature':
-            instance = "Feature Instance"
-            geometry = self._geometry._type
-            properties = len(self._properties)
-            return "<{0} {1} geometry {2} properties>".format(instance,
-                                                              geometry,
-                                                              properties)
-        elif self._type == 'FeatureCollection':
-            instance = 'FeatureCollection Instance'
-            qty = len(self)
-            bounds = self.bounds
-            return '<{0} {1} Features {2} bbox>'.format(instance, qty, bounds)
-
-        else:
-            return object.__repr__(self)
-
 
 class _Geometry(_GeoObject):
     """
@@ -146,6 +93,12 @@ class Feature(_GeoObject):
             properties = {}
         self._properties = properties
         self._feature_id = feature_id
+
+    def __repr__(self):
+        geometry = self._geometry._type
+        properties = len(self._properties)
+        return "<Feature Instance {0} geometry {1} properties>".format(
+            geometry, properties)
 
     @property
     def id(self):
@@ -233,6 +186,9 @@ class Point(_Geometry):
             self._coordinates = coords
         else:
             raise ValueError
+
+    def __repr__(self):
+        return("Point({0}, {1})".format(self.x, self.y))
 
     @property
     def x(self):
@@ -338,6 +294,11 @@ class LineString(_Geometry):
         else:
             raise TypeError
 
+    def __repr__(self):
+        instance = "LineString Instance"
+        qty = len(self.coords)
+        return "<{0} {1} Coords>".format(instance, qty)
+
     @property
     def geoms(self):
         return tuple(self._geoms)
@@ -399,6 +360,11 @@ class LinearRing(LineString):
         super(LinearRing, self).__init__(coordinates)
         if self._geoms[0].coords != self._geoms[-1].coords:
             self._geoms.append(self._geoms[0])
+
+    def __repr__(self):
+        instance = "LinearRing Instance"
+        qty = len(self.coords)
+        return "<{0} {1} Coords>".format(instance, qty)
 
     @property
     def coords(self):
@@ -523,6 +489,13 @@ class Polygon(_Geometry):
         else:
             raise TypeError
 
+    def __repr__(self):
+        instance = "Polygon Instance"
+        inter_qty = len(self._interiors)
+        exter_qty = len(self._exterior.coords)
+        return "<{0} {1} Interior {2} Exterior>".format(
+            instance, inter_qty, exter_qty)
+
     @property
     def exterior(self):
         if self._exterior is not None:
@@ -613,6 +586,11 @@ class MultiPoint(_Geometry):
             self._from_geo_interface(points)
         else:
             raise TypeError
+
+    def __repr__(self):
+        instance = "MultiPoint Instance"
+        qty = len(self)
+        return "<{0} {1} Points>".format(instance, qty)
 
     def _from_geo_interface(self, point):
         gi = point.__geo_interface__
@@ -728,6 +706,12 @@ class MultiLineString(_Geometry):
         else:
             raise TypeError
 
+    def __repr__(self):
+        instance = "MultiLineString Instance"
+        qty = len(self)
+        bounds = self.bounds
+        return "<{0} {1} Lines {2} bbox>".format(instance, qty, bounds)
+
     @property
     def geoms(self):
         return tuple(self._geoms)
@@ -820,7 +804,12 @@ class MultiPolygon(_Geometry):
         if isinstance(polygons, (list, tuple)):
             for polygon in polygons:
                 if isinstance(polygon, (list, tuple)):
-                    p = Polygon(polygon[0], polygon[1])
+                    if len(polygon) == 1:
+                        p = Polygon(polygon[0])
+                    elif len(polygon) == 2:
+                        p = Polygon(polygon[0], polygon[1])
+                    else:
+                        raise TypeError
                     self._geoms.append(p)
                 elif hasattr(polygon, '__geo_interface__'):
                     gi = polygon.__geo_interface__
@@ -840,6 +829,12 @@ class MultiPolygon(_Geometry):
                 raise TypeError
         else:
             raise ValueError
+
+    def __repr__(self):
+        instance = "MultiPolygon Instance"
+        qty = len(self)
+        bounds = self.bounds
+        return "<{0} {1} Polygons {2} bbox>".format(instance, qty, bounds)
 
     @property
     def geoms(self):
@@ -941,6 +936,13 @@ class GeometryCollection(_Geometry):
         else:
             raise TypeError
 
+    def __repr__(self):
+        instance = "GeometryCollection Instance"
+        qty = len(self)
+        bounds = self.bounds
+        return "<{0} {1} Geometries {2} bbox>".format(
+            instance, qty, bounds)
+
     @property
     def geoms(self):
         for geom in self._geoms:
@@ -1031,6 +1033,12 @@ class FeatureCollection(_GeoObject):
                     raise ValueError
         else:
             raise TypeError
+
+    def __repr__(self):
+        instance = 'FeatureCollection Instance'
+        qty = len(self)
+        bounds = self.bounds
+        return '<{0} {1} Features {2} bbox>'.format(instance, qty, bounds)
 
     @property
     def features(self):
